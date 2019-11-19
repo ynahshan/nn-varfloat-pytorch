@@ -6,14 +6,16 @@
 #include <stdint-gcc.h>
 #include "stdio.h"
 
+#define SIGN(val) ((0 < val) - (val < 0))
+
 
 __global__ void __varfloat_cuda__(const float* in, const int N, float* out, int fraction_bits,
                                   float max_sat, float min_sat, bool round) {
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < N; i += blockDim.x * gridDim.x) {
       auto value = in[i];
-      if (abs(value) > max_sat)
-          value = max_sat * signbit(value);
-      if (abs(value) < min_sat)
+      if (fabs(value) > max_sat)
+          value = SIGN(value) * max_sat;
+      if (fabs(value) < min_sat)
           value = 0.;
 
       auto value_hex = *reinterpret_cast<const int32_t *>(&value);
